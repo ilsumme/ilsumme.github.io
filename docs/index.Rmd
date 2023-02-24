@@ -1,0 +1,116 @@
+---
+title: "The association betwen gender social norms, cardiovascular disease and life expectancy. Interactive Plots as supplement to manuscript"
+author: "Iona Lyell"
+date: '2023-02-24'
+output: html_document
+code_folding: "hide"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(qwraps2)
+options(qwraps2_markup = "markdown")
+library(readr)
+library(readxl)
+library(data.table)
+library(ggplot2)
+library(dplyr)
+library(skimr)
+library(tidyverse)
+library(broom)
+library(knitr)
+library(SmartEDA)
+library(performance)
+library(see)
+library(stargazer)
+library(cowplot)
+library(ggiraph)
+```
+
+```{r, include=FALSE}
+#set up data table
+
+results14 <- read_csv("~/Documents/GitHub/gsn-cvd-le/analysisratio14.csv")
+setDT(results14)
+
+results14[, GSNI_PERIOD := as.factor(GSNI_PERIOD)]
+results14[,"...1":= NULL]
+
+results14copy <- copy(results14)
+
+long_14cvd <- melt(data = results14copy,
+                id.vars= c("location_name", "twobias"),
+                measure.vars = c("cvd14fem", "cvd14male", "cvd14both"),
+                variable.name = "cvdcat",
+                value.name = "rate"
+                )
+
+long_14LE <- melt(data = results14copy, 
+                  id.vars = c("location_name", "twobias"),
+                  measure.vars = c("LEbirth2015", "MLEbirth2015"),
+                  variable.name = "le",
+                  value.name = "years"
+                  )
+
+```
+
+Interactive Plots
+```{r, echo=FALSE}
+#labels for facets
+cvd.labs <- c("female", "male", "population")
+names(cvd.labs) <- c("cvd14fem", "cvd14male", "cvd14both")
+
+p1int <- ggplot(data = long_14cvd) +
+  geom_point_interactive(color = "lightblue3",size=3, aes(x=twobias, y=rate, tooltip=location_name, data_id=location_name)) +
+facet_grid(cols = vars(cvdcat),
+             labeller = labeller(cvdcat = cvd.labs)) +
+   labs(x = "GSNI2 (%)",
+        y = "age standardised CVD mortaltiy rate (per 100k)" ) +
+  theme_light()
+                              
+
+scatterfinal1int <- p1int + theme(text=element_text(size=20), #change font size of all text
+        axis.text=element_text(size=10), #change font size of axis text
+        axis.title=element_text(size=15), #change font size of axis titles
+        plot.title=element_text(size=15), #change font size of plot title
+        legend.text=element_text(size=15), #change font size of legend text
+        legend.title=element_text(size=15)) #change font size of legend title 
+
+girafe(ggobj = scatterfinal1int, width_svg = 10, height_svg = 6)
+        
+
+```
+
+```{r, echo=FALSE}
+#labels for facets
+le.labs <- c("female", "male")
+names(le.labs) <- c("LEbirth2015", "MLEbirth2015")
+
+
+p2int <- ggplot(data = long_14LE) +
+  geom_point_interactive(color = "thistle", size=3, aes(x = twobias, y = years, tooltip=location_name, data_id=location_name)) +
+facet_grid(cols = vars(le),
+           labeller = labeller(le = le.labs)) +
+   labs(x = "GSNI2 (%)",
+        y = "life expectancy (years)" )+
+theme_light()                                     
+
+scatterfinal2int <- p2int + theme(text=element_text(size=20), #change font size of all text
+        axis.text=element_text(size=10), #change font size of axis text
+        axis.title=element_text(size=15), #change font size of axis titles
+        plot.title=element_text(size=15), #change font size of plot title
+        legend.text=element_text(size=15), #change font size of legend text
+        legend.title=element_text(size=15)) #change font size of legend title 
+
+girafe(ggobj = scatterfinal2int, width_svg = 10, height_svg = 6)
+
+```
+CVD - Cardiovascular Disease;
+GSNI - Genders Social Norms Index
+
+CVD mortality rates (year = 2014) data source: [Institute for Health Metrics and Evaluation](https://www.healthdata.org/gbd/2019)
+
+Life expectancy at birth (year = 2015) data source: [World Health Observatory](https://www.who.int/data/gho/data/indicators/indicator-details/GHO/life-expectancy-at-birth-(years))
+
+[Gender Social Norms Index](http://hdr.undp.org/en/gsni) collected 2005-2014 
